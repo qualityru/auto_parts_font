@@ -826,9 +826,9 @@ function UserProfile() {
 
       <footer>
         <div className="container">
-          <p>AutoParts Pro © 2026 | Личный кабинет</p>
+          <p>AutoParts Pro © 2026 | Поиск автозапчастей</p>
           <p style={{ marginTop: '8px', opacity: 0.7, fontSize: '0.8rem' }}>
-            Версия 2.1.0 • Последнее обновление: 10.01.2026
+            4 друга, 0 багов (ну почти)
           </p>
         </div>
       </footer>
