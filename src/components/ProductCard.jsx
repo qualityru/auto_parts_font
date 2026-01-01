@@ -25,6 +25,41 @@ function ProductCard({
     }).format(price)
   }
 
+  // Функция для преобразования URL картинок
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '';
+    
+    // Если URL абсолютный (http:// или https://)
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // Если URL начинается с /static/, это картинки с бекенда
+    // Nginx должен проксировать их на 77.238.232.189:8015
+    if (imageUrl.startsWith('/static/')) {
+      return imageUrl; // Оставляем как есть, nginx проксирует
+    }
+    
+    // Если относительный URL без префикса
+    if (!imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
+      return `/${imageUrl}`;
+    }
+    
+    return imageUrl;
+  }
+
+  // Placeholder для отсутствующих картинок
+  const getPlaceholderImage = () => {
+    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIyMCIgdmlld0JveD0iMCAwIDQwMCAyMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyMjAiIGZpbGw9IiNGNUY3RkEiLz48cGF0aCBkPSJNMjAwIDcwQzIzMS4zNiA3MCAyNTYgNTkuMzYgMjU2IDQ1QzI1NiAzMC42NCAyMzEuMzYgMjAgMjAwIDIwQzE2OC42NCAyMCAxNDQgMzAuNjQgMTQ0IDQ1QzE0NCA1OS4zNiAxNjguNjQgNzAgMjAwIDcwWiIgZmlsbD0iI0RDRUZGQyIvPjxwYXRoIGQ9Ik01MCAxNjBDMjguMzYgMTYwIDggMTQ3LjY0IDggMTMwQzggMTEyLjM2IDI4LjMzIDEwMCA1MCAxMDBMNzAgMTAwTDEwMCA0MEwyMDAgNDBMMjcwIDEwMEwzMTAgMTAwTDM1MCAxMDBDMzcxLjY0IDEwMCAzOTIgMTEyLjM2IDM5MiAxMzBDMzkyIDE0Ny42NCAzNzEuNjQgMTYwIDM1MCAxNjBINDBaIiBmaWxsPSIjRUNFRkZGIi8+PC9zdmc+';
+  }
+
+  // Обработчик ошибок загрузки картинок
+  const handleImageError = (e) => {
+    console.warn('Ошибка загрузки картинки:', e.target.src);
+    e.target.onerror = null; // Предотвращаем бесконечный цикл
+    e.target.src = getPlaceholderImage();
+  }
+
   // Если isExpanded меняется извне, обновляем локальное состояние
   useState(() => {
     setShowAllWarehouses(isExpanded)
@@ -60,11 +95,19 @@ function ProductCard({
         {validImages.length > 0 ? (
           <div className="gallery-container">
             <div className="gallery-slides" style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}>
-              {validImages.map((src, idx) => (
-                <div key={idx} className="gallery-slide">
-                  <img src={src} alt={`Изображение ${idx + 1}`} />
-                </div>
-              ))}
+              {validImages.map((src, idx) => {
+                const imageUrl = getImageUrl(src);
+                return (
+                  <div key={idx} className="gallery-slide">
+                    <img 
+                      src={imageUrl} 
+                      alt={`Изображение ${idx + 1}`}
+                      onError={handleImageError}
+                      loading="lazy"
+                    />
+                  </div>
+                )
+              })}
             </div>
             {validImages.length > 1 && (
               <>
