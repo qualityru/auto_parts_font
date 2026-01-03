@@ -3,14 +3,6 @@ name: Build and push front (Docker)
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'yarn.lock'
-      - 'Dockerfile'
-      - 'nginx.front.conf'
 
 jobs:
   build-and-push:
