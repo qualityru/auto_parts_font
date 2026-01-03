@@ -135,8 +135,7 @@ function App() {
       <div className="header-controls">
         <button 
           className="header-btn account-btn" 
-          // onClick={() => setShowAccountModal(true)}
-          onClick={() => window.location.href = '/profile'}
+          onClick={() => setShowAccountModal(true)}
           title="Личный кабинет"
         >
           <i className="fas fa-user"></i>
