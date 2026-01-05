@@ -7,14 +7,15 @@ function ProductCard({
   onOpenImageModal, 
   isItemInCart 
 }) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  // Исправлено: удалили setCurrentImageIndex, так как переключение фото пока не реализовано
+  const [currentImageIndex] = useState(0)
   const [showAllWarehouses, setShowAllWarehouses] = useState(false)
 
-  const images = product.images || []
+  // Исправлено: используем данные напрямую из пропса, чтобы избежать предупреждений о зависимостях
   const warehouses = product.warehouses || []
+  const images = product.images || []
   const isCross = product.is_cross || false
   
-  // Вычисляем минимальную цену из всех складов всех поставщиков
   const minPrice = useMemo(() => {
     if (warehouses.length === 0) return 0
     return Math.min(...warehouses.map(w => w.price))
@@ -31,7 +32,6 @@ function ProductCard({
   const validImages = images.filter(img => img && img.trim() !== '')
   const visibleWarehouses = showAllWarehouses ? warehouses : warehouses.slice(0, 3)
 
-  // Обработчик ошибки загрузки картинки
   const handleImageError = (e) => {
     e.target.onerror = null
     e.target.src = 'https://via.placeholder.com/300x200?text=Нет+фото'
@@ -39,7 +39,6 @@ function ProductCard({
 
   return (
     <div className="product-card" style={{ animationDelay: `${index * 0.05}s` }}>
-      {/* Галерея изображений */}
       <div className="image-gallery" onClick={() => validImages.length > 0 && onOpenImageModal()}>
         {validImages.length > 0 ? (
           <div className="gallery-container">
@@ -88,7 +87,6 @@ function ProductCard({
             </div>
             <div className="warehouses-list">
               {visibleWarehouses.map((warehouse, idx) => {
-                // Генерируем ID склада для проверки в корзине
                 const whId = warehouse.id || `${warehouse.supplier}-${warehouse.name}-${warehouse.price}`
                 const inCart = isItemInCart(product.internalId, whId)
                 
@@ -116,7 +114,6 @@ function ProductCard({
                         className={`small-cart-btn ${inCart ? 'added' : ''}`}
                         onClick={() => onAddToCart(product, warehouse)}
                         disabled={inCart}
-                        title={inCart ? "Уже в корзине" : "В корзину"}
                       >
                         <i className={inCart ? 'fas fa-check' : 'fas fa-cart-plus'}></i>
                       </button>
@@ -128,7 +125,10 @@ function ProductCard({
               {warehouses.length > 3 && (
                 <button 
                   className="more-btn" 
-                  onClick={() => setShowAllWarehouses(!showAllWarehouses)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAllWarehouses(!showAllWarehouses);
+                  }}
                 >
                   <i className={`fas fa-chevron-${showAllWarehouses ? 'up' : 'down'}`}></i>
                   {showAllWarehouses ? 'Скрыть' : `Показать еще ${warehouses.length - 3}`}

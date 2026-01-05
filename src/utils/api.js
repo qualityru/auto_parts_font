@@ -96,6 +96,8 @@ export function searchProductsStream(article, callbacks = {}) {
                 case 'done':
                   if (onDone) onDone(data)
                   break
+                default: // Добавьте это, чтобы убрать ошибку
+                  break
               }
             }
           }
