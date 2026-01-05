@@ -1,4 +1,5 @@
-const BASE = 'https://bogtar.duckdns.org/api'
+const BASE = 'http://127.0.0.1:8015/api';
+// const BASE = 'https://bogtar.duckdns.org/api'
 
 async function request(path, options = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {})
@@ -12,28 +13,113 @@ async function request(path, options = {}) {
   return res
 }
 
-function normalizeLoginPayload(payload) {
-  if (!payload) return {}
+// Функция для SSE потока поиска
+export function searchProductsStream(article, callbacks = {}) {
+  const {
+    onItem,
+    onImages,
+    onError,
+    onDone,
+    onStart,
+    onEnd
+  } = callbacks
 
-  // If payload is a plain string (email)
-  if (typeof payload === 'string') {
-    return { login: payload }
+  // Создаем контроллер для возможности отмены запроса
+  const controller = new AbortController()
+  
+  async function start() {
+    if (onStart) onStart()
+    
+    try {
+      const response = await fetch(`${BASE}/test/search/stream?article=${encodeURIComponent(article)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+        signal: controller.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          
+          if (done) {
+            if (onEnd) onEnd()
+            break
+          }
+
+          buffer += decoder.decode(value, { stream: true })
+          
+          // Обрабатываем события
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() // Оставляем неполное сообщение в буфере
+
+          for (const part of parts) {
+            if (part.trim() === '') continue
+            
+            const lines = part.split('\n')
+            let eventType = 'message'
+            let data = null
+
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.substring(6).trim()
+              } else if (line.startsWith('data:')) {
+                try {
+                  data = JSON.parse(line.substring(5).trim())
+                } catch (e) {
+                  console.error('Ошибка парсинга данных SSE:', e)
+                }
+              }
+            }
+
+            if (data !== null) {
+              switch (eventType) {
+                case 'item':
+                  if (onItem) onItem(data)
+                  break
+                case 'images':
+                  if (onImages) onImages(data)
+                  break
+                case 'error':
+                  if (onError) onError(data)
+                  break
+                case 'done':
+                  if (onDone) onDone(data)
+                  break
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          throw error
+        }
+      } finally {
+        reader.releaseLock()
+      }
+    } catch (error) {
+      if (onError) onError({ error: error.message })
+      if (onEnd) onEnd()
+    }
   }
 
-  // If payload already has `login` key in expected shape, keep it
-  if (payload.login) {
-    // if supplied as { email: 'x' } handled below
-    return payload
+  return {
+    start,
+    abort: () => controller.abort()
   }
-
-  // If payload uses `email` key, map to `login`
-  if (payload.email) {
-    return Object.assign({}, payload, { login: payload.email })
-  }
-
-  return payload
 }
 
+// Функция для обычного поиска (для обратной совместимости)
 export async function searchProducts(article) {
   const response = await fetch(`${BASE}/test/search?article=${encodeURIComponent(article)}`)
 
@@ -42,6 +128,20 @@ export async function searchProducts(article) {
   }
 
   return await response.json()
+}
+
+// Функция для отладки SSE
+export async function testSearchStream(article) {
+  const events = []
+  const stream = searchProductsStream(article, {
+    onItem: (item) => events.push({ type: 'item', data: item }),
+    onImages: (images) => events.push({ type: 'images', data: images }),
+    onError: (error) => events.push({ type: 'error', data: error }),
+    onDone: (done) => events.push({ type: 'done', data: done }),
+  })
+  
+  await stream.start()
+  return events
 }
 
 export async function authorize(payload) {
@@ -68,7 +168,6 @@ export async function confirmEmail(requestBody, code = undefined, recovery = fal
     body: JSON.stringify(body),
   })
 
-  // endpoint may return json or just status
   try {
     return await res.json()
   } catch (e) {
@@ -101,4 +200,22 @@ export async function passwordRecovery(requestBody, guard_hash = undefined) {
   } catch (e) {
     return null
   }
+}
+
+function normalizeLoginPayload(payload) {
+  if (!payload) return {}
+
+  if (typeof payload === 'string') {
+    return { login: payload }
+  }
+
+  if (payload.login) {
+    return payload
+  }
+
+  if (payload.email) {
+    return Object.assign({}, payload, { login: payload.email })
+  }
+
+  return payload
 }

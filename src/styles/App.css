@@ -1754,3 +1754,16 @@
                 padding: 60px 20px 40px;
             }
         }
+.wh-supplier-tag {
+  font-size: 0.7rem;
+  background: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #666;
+  margin-left: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.low-stock { color: #f39c12; }
+.in-stock { color: #27ae60; }
