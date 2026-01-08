@@ -6,6 +6,7 @@ import {
   IconButton,
   Chip,
   Divider,
+  useTheme,
 } from '@mui/material'
 
 import WarehouseIcon from '@mui/icons-material/Warehouse'
@@ -29,6 +30,7 @@ function WarehouseList({
   onAddToCart,
   isItemInCart,
 }) {
+  const theme = useTheme()
   const visibleWarehouses = isExpanded
     ? warehouses
     : warehouses.slice(0, 2)
@@ -37,7 +39,7 @@ function WarehouseList({
     <Box>
       {/* TITLE */}
       <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-        <WarehouseIcon color="action" />
+        <WarehouseIcon sx={{ color: theme.palette.text.secondary }} />
         <Typography variant="subtitle1" fontWeight={600}>
           Наличие на складах ({warehouses.length})
         </Typography>
@@ -55,6 +57,7 @@ function WarehouseList({
                 border: 1,
                 borderColor: 'divider',
                 borderRadius: 2,
+                bgcolor: theme.palette.mode === 'light' ? 'transparent' : theme.palette.background.paper,
               }}
             >
               <Stack
@@ -117,7 +120,7 @@ function WarehouseList({
                 </Stack>
 
                 {/* RIGHT */}
-                <Stack alignItems="flex-end" spacing={0.5}>
+                  <Stack alignItems="flex-end" spacing={0.5}>
                   <Stack direction="row" spacing={0.5} alignItems="baseline">
                     <Typography variant="subtitle1" fontWeight={600}>
                       {formatPrice(warehouse.price || 0)}

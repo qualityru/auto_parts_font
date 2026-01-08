@@ -13,6 +13,7 @@ import {
   Button,
   useScrollTrigger,
   alpha,
+  useTheme,
   TextField,
   InputAdornment,
 } from '@mui/material'
@@ -22,15 +23,23 @@ import DirectionsCarFilledIcon from '@mui/icons-material/DirectionsCarFilled'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import Brightness4Icon from '@mui/icons-material/Brightness4'
+import Brightness7Icon from '@mui/icons-material/Brightness7'
 import { useNavigate } from 'react-router-dom'
 
 // Стилизованный контейнер для поиска
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: '12px',
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  backgroundColor: alpha(
+    theme.palette.common.white,
+    theme.palette.mode === 'light' ? 0.15 : 0.06
+  ),
   '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
+    backgroundColor: alpha(
+      theme.palette.common.white,
+      theme.palette.mode === 'light' ? 0.25 : 0.09
+    ),
   },
   marginRight: theme.spacing(2),
   marginLeft: 0,
@@ -72,9 +81,12 @@ function Header({
   searchQuery: externalSearchQuery,
   onSearch,
   setSearchQuery: externalSetSearchQuery,
-  cartItems = [] 
+  cartItems = [],
+  themeMode = 'light',
+  onToggleTheme = null,
 }) {
   const navigate = useNavigate()
+  const theme = useTheme()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [localSearchQuery, setLocalSearchQuery] = useState('')
   
@@ -93,6 +105,14 @@ function Header({
     disableHysteresis: true,
     threshold: 0,
   })
+
+  const appBarBg = trigger
+    ? (theme.palette.mode === 'light'
+      ? 'rgba(25, 118, 210, 0.8)'
+      : 'rgba(11,95,168,0.92)')
+    : (theme.palette.mode === 'light'
+      ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
+      : 'linear-gradient(135deg, #0b5fa8 0%, #0a4a87 100%)')
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -121,9 +141,7 @@ function Header({
       position="sticky"
       elevation={trigger ? 4 : 0}
       sx={{
-        background: trigger 
-          ? 'rgba(25, 118, 210, 0.8)' 
-          : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+        background: appBarBg,
         backdropFilter: 'blur(10px)',
         transition: 'all 0.3s ease-in-out',
         py: trigger ? 0.5 : 1,
@@ -151,7 +169,7 @@ function Header({
                 gap: 1
               }}
             >
-              bogtar<Box component="span" sx={{ color: '#90caf9' }}>:)</Box>
+              BogTar<Box component="span" sx={{ color: '#90caf9' }}>:)</Box>
             </Typography>
           </Stack>
 
@@ -186,14 +204,14 @@ function Header({
               variant="outlined"
               autoComplete="off"
               sx={{ 
-                bgcolor: alpha('#fff', 0.15),
+                bgcolor: alpha(theme.palette.common.white, theme.palette.mode === 'light' ? 0.15 : 0.06),
                 borderRadius: '8px',
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { border: 'none' },
                   '&:hover fieldset': { border: 'none' },
                 },
                 '& .MuiInputBase-input': {
-                  color: 'white',
+                  color: theme.palette.text.primary,
                   py: 0.5,
                   px: 1,
                 },
@@ -201,7 +219,7 @@ function Header({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'white' }} />
+                    <SearchIcon sx={{ color: theme.palette.text.primary }} />
                   </InputAdornment>
                 ),
                 endAdornment: searchQuery && (
@@ -209,7 +227,7 @@ function Header({
                     <IconButton
                       size="small"
                       onClick={handleSearch}
-                      sx={{ color: 'white' }}
+                      sx={{ color: theme.palette.text.primary }}
                     >
                       <SearchIcon fontSize="small" />
                     </IconButton>
@@ -223,6 +241,15 @@ function Header({
 
           {/* ACTIONS */}
           <Stack direction="row" spacing={1} alignItems="center">
+            {/* Theme toggle */}
+            <IconButton
+              color="inherit"
+              onClick={() => onToggleTheme && onToggleTheme()}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              title={themeMode === 'light' ? 'Включить тёмную тему' : 'Включить светлую тему'}
+            >
+              {themeMode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+            </IconButton>
             {/* Корзина */}
             <IconButton 
               color="inherit" 
@@ -258,7 +285,7 @@ function Header({
             {isLoggedIn ? (
               <IconButton 
                 onClick={() => navigate('/profile')} 
-                sx={{ p: 0.5, border: '2px solid rgba(255,255,255,0.3)' }}
+                sx={{ p: 0.5, border: `2px solid ${alpha(theme.palette.common.white, 0.18)}` }}
               >
                 <Avatar 
                   sx={{ width: 35, height: 35, bgcolor: '#90caf9', color: '#0d47a1' }}
@@ -273,11 +300,12 @@ function Header({
                 startIcon={<AccountCircleIcon />}
                 onClick={onAccountClick}
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.2)',
+                  bgcolor: alpha(theme.palette.common.white, theme.palette.mode === 'light' ? 0.2 : 0.08),
                   borderRadius: '10px',
                   textTransform: 'none',
                   fontWeight: 600,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }
+                  color: theme.palette.text.primary,
+                  '&:hover': { bgcolor: alpha(theme.palette.common.white, theme.palette.mode === 'light' ? 0.3 : 0.12) }
                 }}
               >
                 Войти

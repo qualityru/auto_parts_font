@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import {
   Box,
   Container,
@@ -6,7 +6,9 @@ import {
   Stack,
   Grid,
   Chip,
+  CssBaseline,
 } from '@mui/material'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 
 import Header from './components/Header'
 import ProductCard from './components/ProductCard'
@@ -20,6 +22,36 @@ import ImageModal from './components/ImageModal'
 import { searchProductsStream } from './utils/api'
 
 function App() {
+  const [themeMode, setThemeMode] = useState('light')
+
+  useEffect(() => {
+    const stored = localStorage.getItem('themeMode')
+    if (stored === 'light' || stored === 'dark') setThemeMode(stored)
+  }, [])
+
+  const toggleTheme = () => {
+    setThemeMode(prev => {
+      const next = prev === 'light' ? 'dark' : 'light'
+      localStorage.setItem('themeMode', next)
+      return next
+    })
+  }
+
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode: themeMode,
+      ...(themeMode === 'light'
+        ? { background: { default: '#f7f7f7' } }
+        : { background: { default: '#0f1720' } }),
+    },
+    components: {
+      MuiAppBar: {
+        defaultProps: {
+          enableColorOnDark: true,
+        },
+      },
+    },
+  }), [themeMode])
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -179,24 +211,28 @@ function App() {
   }
 
   return (
-    <Box minHeight="100vh" bgcolor="#f7f7f7">
-      <Header 
-        onAccountClick={() => setShowAccountModal(true)}
-        onExampleSearch={(q) => {
-          if (q === '') {
-            setSearchQuery('')
-            setProducts([])
-            setError(null)
-          } else {
-            setSearchQuery(q)
-            handleSearch(q)
-          }
-        }}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onSearch={() => handleSearch()}
-        cartItems={cartItems}
-      />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box minHeight="100vh" sx={{ bgcolor: 'background.default' }}>
+        <Header 
+          onAccountClick={() => setShowAccountModal(true)}
+          onExampleSearch={(q) => {
+            if (q === '') {
+              setSearchQuery('')
+              setProducts([])
+              setError(null)
+            } else {
+              setSearchQuery(q)
+              handleSearch(q)
+            }
+          }}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSearch={() => handleSearch()}
+          cartItems={cartItems}
+          themeMode={themeMode}
+          onToggleTheme={toggleTheme}
+        />
 
       <Container maxWidth="xl" sx={{ mt: 4, pb: 4 }}>
         <Box mt={4}>
@@ -271,6 +307,7 @@ function App() {
         />
       )}
     </Box>
+    </ThemeProvider>
   )
 }
 

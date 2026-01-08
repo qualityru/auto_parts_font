@@ -10,6 +10,7 @@ import {
   Stack,
   styled,
   Button,
+  useTheme,
 } from '@mui/material';
 import {
   ShoppingCartOutlined,
@@ -22,41 +23,42 @@ import {
 
 // --- СТИЛИЗАЦИЯ (СТРОГАЯ ГЕОМЕТРИЯ) ---
 
-const StyledCard = styled(Card)({
+const StyledCard = styled(Card)(({ theme }) => ({
   width: 320,
-  height: 600, // Увеличил высоту до 600px, чтобы всё влезло без тесноты
+  height: 600,
   display: 'flex',
   flexDirection: 'column',
-  borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-  border: '1px solid #f0f2f5',
+  borderRadius: 16,
+  boxShadow: theme.shadows[1],
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
   transition: 'all 0.3s ease',
-  '&:hover': { 
+  '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
-  }
-});
+    boxShadow: theme.shadows[4],
+  },
+}));
 
-const GalleryContainer = styled(Box)({
+const GalleryContainer = styled(Box)(({ theme }) => ({
   height: 180,
   width: '100%',
-  backgroundColor: '#f8f9fa',
+  backgroundColor: theme.palette.action.hover,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   overflow: 'hidden',
   position: 'relative',
-  '& img': { width: '100%', height: '100%', objectFit: 'contain' }
-});
+  '& img': { width: '100%', height: '100%', objectFit: 'contain' },
+}));
 
-const WarehouseZone = styled(Box)({
-  height: 190, // Фиксированная высота для списка складов
+const WarehouseZone = styled(Box)(({ theme }) => ({
+  height: 190,
   overflowY: 'auto',
-  marginTop: '12px',
-  paddingRight: '4px',
-  '&::-webkit-scrollbar': { width: '4px' },
-  '&::-webkit-scrollbar-thumb': { backgroundColor: '#e2e8f0', borderRadius: '10px' },
-});
+  marginTop: 12,
+  paddingRight: 4,
+  '&::-webkit-scrollbar': { width: 4 },
+  '&::-webkit-scrollbar-thumb': { backgroundColor: theme.palette.action.selected, borderRadius: 10 },
+}));
 
 function ProductCard({
   product,
@@ -66,6 +68,7 @@ function ProductCard({
 }) {
   const [showAll, setShowAll] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const theme = useTheme();
 
   const images = product.images || [];
   const validImages = images.filter((img) => img && img.trim() !== '');
@@ -118,7 +121,7 @@ function ProductCard({
                 label={product.supplier} 
                 size="small" 
                 variant="outlined"
-                sx={{ fontSize: '10px', height: 20, bgcolor: '#f1f5f9' }} 
+                sx={{ fontSize: '10px', height: 20, bgcolor: theme.palette.mode === 'light' ? '#f1f5f9' : theme.palette.action.selected }} 
               />
             )}
             <Chip 
@@ -159,7 +162,7 @@ function ProductCard({
           Предложений: {product.warehouses.length}
         </Typography>
 
-        <Divider />
+        <Divider sx={{ borderColor: 'divider', my: 1 }} />
 
         {/* 5. СКЛАДЫ (Срок доставки и Возврат внутри) */}
         <WarehouseZone>
@@ -200,8 +203,8 @@ function ProductCard({
                         onClick={() => onAddToCart(product, w)}
                         sx={{ 
                           border: '1.5px solid', 
-                          borderRadius: '10px',
-                          borderColor: inCart ? 'success.main' : 'primary.light'
+                          borderRadius: 2,
+                          borderColor: inCart ? 'success.main' : theme.palette.primary.light
                         }}
                       >
                         {inCart ? <CheckOutlined fontSize="small" /> : <ShoppingCartOutlined fontSize="small" />}
@@ -224,11 +227,11 @@ function ProductCard({
               size="small" 
               onClick={() => setShowAll(!showAll)}
               sx={{ 
-                bgcolor: '#f1f5f9', 
-                color: '#475569', 
+                bgcolor: theme.palette.mode === 'light' ? '#f1f5f9' : theme.palette.action.selected,
+                color: theme.palette.text.primary,
                 textTransform: 'none',
                 fontWeight: 700,
-                '&:hover': { bgcolor: '#e2e8f0' }
+                '&:hover': { bgcolor: theme.palette.action.hover }
               }}
             >
               {showAll ? 'Свернуть склады' : `Все склады (+${product.warehouses.length - 3})`}
