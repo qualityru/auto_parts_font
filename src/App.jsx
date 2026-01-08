@@ -58,9 +58,15 @@ function App() {
 
           const idx = prev.findIndex(p => p.groupKey === groupKey)
 
+          // Извлекаем поставщика из различных источников
+          const itemSupplier = item.supplier || 
+                             (item.metadata?.original_data?.supplier) || 
+                             'Неизвестный поставщик'
+
+          // Добавляем поставщика в warehouses
           const warehouses = item.warehouses.map(w => ({
             ...w,
-            supplier: item.supplier,
+            supplier: w.supplier || itemSupplier, // Используем supplier из склада или из item
           }))
 
           if (idx > -1) {
@@ -81,7 +87,7 @@ function App() {
               id: item.id,
               internalId: groupKey,
               groupKey,
-              supplier: item.supplier,
+              supplier: itemSupplier, // Сохраняем поставщика
               brand: item.brand,
               article: item.article,
               name: item.name,
@@ -89,13 +95,32 @@ function App() {
               images: item.images || [],
               specifications: item.specifications || {},
               metadata: item.metadata || {},
-              is_cross: item.is_cross,
+              is_cross: item.metadata?.is_cross || false,
               warehouses,
             },
           ]
         })
 
-        setSuppliers(prev => new Set(prev).add(item.supplier))
+        // Обновляем список поставщиков - собираем ВСЕХ поставщиков из товара и складов
+        setSuppliers(prev => {
+          const newSuppliers = new Set([...prev])
+          
+          // Добавляем основного поставщика товара
+          const itemSupplier = item.supplier || 
+                             (item.metadata?.original_data?.supplier)
+          if (itemSupplier) {
+            newSuppliers.add(itemSupplier)
+          }
+          
+          // Добавляем поставщиков из всех складов
+          item.warehouses.forEach(w => {
+            if (w.supplier) {
+              newSuppliers.add(w.supplier)
+            }
+          })
+          
+          return newSuppliers
+        })
       },
 
       onImages: ({ article, images }) => {
@@ -148,7 +173,7 @@ function App() {
           currency: warehouse.currency,
           quantity: 1,
           warehouseName: warehouse.name,
-          supplier: warehouse.supplier,
+          supplier: warehouse.supplier || product.supplier,
         },
       ]
     })
