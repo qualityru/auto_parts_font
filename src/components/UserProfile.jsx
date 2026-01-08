@@ -113,10 +113,7 @@ function UserProfile() {
         company: mockUserData.company,
         city: mockUserData.city,
       })
-      setRecentSearches(mockRecentSearches)
-      setFavorites(mockFavorites)
       setOrderHistory(mockOrderHistory)
-      setNotifications(mockNotifications)
       setIsLoading(false)
     }, 800)
   }, [])
